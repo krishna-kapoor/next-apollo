@@ -108,3 +108,5 @@ export const auth = createGSSPMiddleware((context, pageProps, next) => {
     };
 });
 ```
+
+**GitHub**: https://github.com/krishna-kapoor/next-apollo
