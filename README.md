@@ -45,7 +45,7 @@ export default function App({ Component, pageProps }) {
 
 or using _TypeScript_, like this:
 
-```typescriptreact
+```tsx
 // pages/_app.tsx
 
 import NextApolloClient from "@krishna-kapoor/next-apollo";
@@ -65,7 +65,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
 ### 3. Use SSR!
 
-```typescriptreact
+```tsx
 // pages/index.tsx
 
 import { MY_QUERY } from "../../path/to/queries";
@@ -95,7 +95,7 @@ export const getServerSideProps = gssp(
 
 Usage of the `createGSSPMiddleware` function allows you to create a middleware, which will decide whether the next piece of server-side code should run. This is determined by under what conditions the `next()` function is called. The following example shows how `jwt` tokens are used to provide/prohibit access to a potential user.
 
-```typescriptreact
+```tsx
 export const auth = createGSSPMiddleware((context, pageProps, next) => {
     const accessToken = context.req.cookies["<cookie key>"];
 
