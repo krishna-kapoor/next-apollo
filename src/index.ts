@@ -4,6 +4,7 @@ import {
     DocumentNode,
     NormalizedCacheObject,
 } from "@apollo/client";
+import merge from "deepmerge";
 import { GetServerSidePropsContext, Redirect } from "next";
 import { ParsedUrlQuery } from "querystring";
 import { useMemo } from "react";
@@ -38,7 +39,7 @@ const ssrMode = typeof window === "undefined";
 export default class NextApolloClient {
     options: NextApolloClientOptions;
 
-    constructor(options: ApolloClientOptions<NormalizedCacheObject>) {
+    constructor(options: NextApolloClientOptions) {
         this.options = options;
     }
 
@@ -53,14 +54,18 @@ export default class NextApolloClient {
         const _apolloClient = apolloClient ?? this.createClient();
 
         if (initialState) {
-            _apolloClient.cache.restore(initialState);
+            const existingCache = _apolloClient.extract();
+
+            const data = merge(initialState, existingCache);
+
+            _apolloClient.cache.restore(data);
         }
 
         if (ssrMode) {
             return _apolloClient;
         }
 
-        apolloClient = _apolloClient;
+        apolloClient = apolloClient ?? _apolloClient;
 
         return apolloClient;
     }

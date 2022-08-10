@@ -1,6 +1,6 @@
 {
     "name": "@krishna-kapoor/next-apollo",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "description": "Seamlessly integrate Apollo SSR into NextJS.",
     "main": "index.js",
     "author": "Krishna Kapoor",
@@ -8,6 +8,7 @@
     "private": false,
     "dependencies": {
         "@apollo/client": "^3.6.9",
+        "deepmerge": "^4.2.2",
         "graphql": "^16.5.0",
         "next": "^12.2.3",
         "react": "^18.2.0",

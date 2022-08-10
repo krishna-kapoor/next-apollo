@@ -1,4 +1,4 @@
-# @krishna-kapoor/next-apollo v1.0.3
+# @krishna-kapoor/next-apollo v1.0.4
 
 Seamlessly integrate Apollo SSR into NextJS.
 
@@ -49,6 +49,7 @@ or using _TypeScript_, like this:
 // pages/_app.tsx
 
 import NextApolloClient from "@krishna-kapoor/next-apollo";
+import { ApolloProvider } from "@apollo/client";
 import { AppProps } from "next";
 
 export default function App({ Component, pageProps }: AppProps) {
