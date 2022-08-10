@@ -51,6 +51,7 @@ or using _TypeScript_, like this:
 import NextApolloClient from "@krishna-kapoor/next-apollo";
 import { ApolloProvider } from "@apollo/client";
 import { AppProps } from "next";
+import { ApolloProvider } from "@apollo/client";
 
 export default function App({ Component, pageProps }: AppProps) {
     const client = apolloService.useNextApollo(pageProps.initialApolloState);
