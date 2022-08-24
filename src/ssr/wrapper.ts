@@ -5,12 +5,20 @@ import { GetServerSidePropsMiddleware, GetStaticPropsMiddleware } from "./middle
 
 export type Wrapper<T, R> = (...middleware: T[]) => R;
 
+/**
+ * This creates a function that wraps other middleware for `getStaticProps`.
+ * @param wrapper A middleware function to wrap other middleware
+ */
 function createGSPWrapper(
     wrapper: GetStaticPropsMiddleware
 ): Wrapper<GetStaticPropsMiddleware, GetStaticProps> {
     return (...middleware) => gsp(wrapper, ...middleware);
 }
 
+/**
+ * This creates a function that wraps other middleware for `getServerSideProps`.
+ * @param wrapper A middleware function to wrap other middleware
+ */
 function createGSSPWrapper(
     wrapper: GetServerSidePropsMiddleware
 ): Wrapper<GetServerSidePropsMiddleware, GetServerSideProps> {

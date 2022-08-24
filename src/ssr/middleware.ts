@@ -3,11 +3,13 @@ import { GetServerSidePageProps, GetStaticPageProps, VoidOrPromise } from "../cr
 
 export type NextFunction = () => void;
 
-export type Middleware<C, P> = (
-    context: C,
-    pageProps: P,
-    next: NextFunction
-) => VoidOrPromise | undefined;
+export interface MiddlewareParams<C, P> {
+    context: C;
+    pageProps: P;
+    next: NextFunction;
+}
+
+export type Middleware<C, P> = (params: MiddlewareParams<C, P>) => VoidOrPromise | undefined;
 
 export type GetServerSidePropsMiddleware = Middleware<
     GetServerSidePropsContext,
@@ -16,10 +18,16 @@ export type GetServerSidePropsMiddleware = Middleware<
 
 export type GetStaticPropsMiddleware = Middleware<GetStaticPropsContext, GetStaticPageProps>;
 
+/**
+ * Create a middleware function for `getServerSideProps`.
+ */
 function createGetServerSidePropsMiddleware(middleware: GetServerSidePropsMiddleware) {
     return middleware;
 }
 
+/**
+ * Create a middleware function for `getStaticProps`.
+ */
 function createGetStaticPropsMiddleware(middleware: GetStaticPropsMiddleware) {
     return middleware;
 }

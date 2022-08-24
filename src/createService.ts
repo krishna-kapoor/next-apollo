@@ -118,14 +118,14 @@ export function createService(options: ServiceOptions) {
     ) {
         const middleware = createMiddleware[type];
 
-        return middleware(async (context, pageProps, next) => {
+        return middleware(async ({ context: ctx, pageProps, next }) => {
             const { query, variables, onCompleted, onError } = options;
 
             const client = initializeApolloClient();
 
             const { data, error, errors } = await client.query<Query, Variables>({
                 query,
-                variables: variables instanceof Function ? variables(context.params) : variables,
+                variables: variables instanceof Function ? variables(ctx.params) : variables,
             });
 
             if (error || errors) {

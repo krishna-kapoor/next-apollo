@@ -2,6 +2,9 @@ import { GetStaticProps } from "next";
 import { NonEmptyArray } from "./gssp";
 import { GetStaticPropsMiddleware } from "./middleware";
 
+/**
+ * Pass in middleware to run them one-by-one to populate `pageProps` with necessary properties and return the results for `getStaticProps`.
+ */
 export function gsp(...middleware: NonEmptyArray<GetStaticPropsMiddleware>): GetStaticProps {
     return async context => {
         const pageProps = { props: {} as never } as any;
@@ -17,7 +20,11 @@ export function gsp(...middleware: NonEmptyArray<GetStaticPropsMiddleware>): Get
             prevIndex = index;
 
             if (middleware instanceof Function) {
-                await middlewareToRun(context, pageProps, () => runner(index + 1));
+                await middlewareToRun({
+                    context,
+                    pageProps,
+                    next: () => runner(index + 1),
+                });
             }
         };
 
