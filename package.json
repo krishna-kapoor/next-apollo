@@ -1,6 +1,6 @@
 {
     "name": "@krishna-kapoor/next-apollo",
-    "version": "1.0.5-beta",
+    "version": "1.0.5-beta.1",
     "description": "Seamlessly integrate Apollo SSR into NextJS.",
     "main": "./dist/index.js",
     "author": "Krishna Kapoor",
