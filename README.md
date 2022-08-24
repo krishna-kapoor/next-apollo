@@ -102,7 +102,7 @@ Usage of the `createGSSPMiddleware` function allows you to create a middleware, 
 
 import { middleware } from "@krishna-kapoor/next-apollo/ssr";
 
-export const auth = middleware.serverSide((context, pageProps, next) => {
+export const auth = middleware.serverSide(({ context, pageProps, next }) => {
     const accessToken = context.req.cookies["<cookie key>"];
 
     if (accessToken) {
