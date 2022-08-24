@@ -1,8 +1,8 @@
 {
     "name": "@krishna-kapoor/next-apollo",
-    "version": "1.0.4",
+    "version": "1.0.5-beta",
     "description": "Seamlessly integrate Apollo SSR into NextJS.",
-    "main": "index.js",
+    "main": "./dist/index.js",
     "author": "Krishna Kapoor",
     "license": "MIT",
     "private": false,
@@ -11,10 +11,13 @@
         "deepmerge": "^4.2.2",
         "graphql": "^16.5.0",
         "next": "^12.2.3",
+        "node": "^16.17.0",
+        "querystring": "^0.2.1",
         "react": "^18.2.0",
         "react-dom": "^18.2.0"
     },
     "devDependencies": {
+        "@types/node": "^18.7.12",
         "@types/react": "^18.0.15",
         "@types/react-dom": "^18.0.6",
         "typescript": "^4.7.4"
@@ -22,5 +25,8 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/krishna-kapoor/next-apollo"
+    },
+    "scripts": {
+        "build": "rollup --config"
     }
 }
