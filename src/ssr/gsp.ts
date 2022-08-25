@@ -1,4 +1,5 @@
 import { GetStaticProps } from "next";
+import { StaticPageProps } from "../createService";
 import { NonEmptyArray } from "./gssp";
 import { GetStaticPropsMiddleware } from "./middleware";
 
@@ -7,20 +8,20 @@ import { GetStaticPropsMiddleware } from "./middleware";
  */
 export function gsp(...middleware: NonEmptyArray<GetStaticPropsMiddleware>): GetStaticProps {
     return async context => {
-        const pageProps = { props: {} as never } as any;
+        let pageProps = { props: {} } as StaticPageProps;
         let prevIndex = -1;
 
         const runner = async (index: number) => {
-            const middlewareToRun = middleware[index];
+            const currentMiddleware = middleware[index];
 
             if (index === prevIndex) {
-                throw new Error("[gssp] next() was called multiple times.");
+                throw new Error("[gsp] next() was called multiple times.");
             }
 
             prevIndex = index;
 
-            if (middleware instanceof Function) {
-                await middlewareToRun({
+            if (currentMiddleware instanceof Function) {
+                await currentMiddleware({
                     context,
                     pageProps,
                     next: () => runner(index + 1),

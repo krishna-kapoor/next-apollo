@@ -1,4 +1,5 @@
 import { GetServerSideProps } from "next";
+import { ServerSidePageProps } from "../createService";
 import { GetServerSidePropsMiddleware } from "./middleware";
 
 export type NonEmptyArray<T> = [T, ...T[]];
@@ -10,7 +11,7 @@ export function gssp(
     ...middleware: NonEmptyArray<GetServerSidePropsMiddleware>
 ): GetServerSideProps {
     return async context => {
-        const pageProps = { props: {} as never } as any;
+        let pageProps = { props: {} } as ServerSidePageProps;
         let prevIndex = -1;
 
         const runner = async (index: number) => {
@@ -22,7 +23,7 @@ export function gssp(
 
             prevIndex = index;
 
-            if (middleware instanceof Function) {
+            if (currentMiddleware instanceof Function) {
                 await currentMiddleware({
                     context,
                     pageProps,

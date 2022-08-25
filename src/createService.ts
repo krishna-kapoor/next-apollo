@@ -10,9 +10,13 @@ import { Redirect } from "next";
 import { ParsedUrlQuery } from "querystring";
 import { useMemo } from "react";
 import { __DEV__ } from "./constants";
-import { createMiddleware } from "./ssr/middleware";
+import {
+    createMiddleware,
+    GetServerSidePropsMiddleware,
+    GetStaticPropsMiddleware,
+} from "./ssr/middleware";
 
-export interface GetServerSidePageProps {
+export interface ServerSidePageProps {
     props: {
         initialApolloState: NormalizedCacheObject;
         [key: string]: any;
@@ -21,7 +25,7 @@ export interface GetServerSidePageProps {
     notFound: true;
 }
 
-export interface GetStaticPageProps extends GetServerSidePageProps {
+export interface StaticPageProps extends ServerSidePageProps {
     revalidate: number | false;
 }
 
@@ -31,7 +35,7 @@ export type MiddlewareType = keyof typeof createMiddleware;
 
 type Maybe<T> = MaybeUndefined<T> | null;
 
-type MaybeUndefined<T> = T | undefined;
+export type MaybeUndefined<T> = T | undefined;
 
 type CacheShape = NormalizedCacheObject;
 
@@ -43,12 +47,48 @@ export interface OnErrorResponse {
     discontinue?: true;
 }
 
-export interface SSRFetchOptions<Query, Variables = any> {
+export interface ApolloFetchOptionsBase<Variables = any> {
+    /**
+     * The GraphQL query to run.
+     */
     query: DocumentNode;
+    /**
+     * GraphQL query variables, if required.
+     */
     variables?: ValueOrCallback<Variables, MaybeUndefined<ParsedUrlQuery>>;
-    onCompleted?(data: Query, pageProps: GetServerSidePageProps): VoidOrPromise;
+}
+
+export interface ApolloServerSideFetchOptions<Query, Variables = any>
+    extends ApolloFetchOptionsBase<Variables> {
+    /**
+     * Do something with `data` or change `pageProps` based on what data was returned.
+     * @param data Data returned after a successful fetch.
+     * @param pageProps Server-side page props, which can be changed within this method.
+     */
+    onCompleted?(data: Query, pageProps: ServerSidePageProps): VoidOrPromise;
+    /**
+     * Handle errors resulting from fetching.
+     * @param pageProps Server-side page props, which can be changed within this method.
+     */
     onError?(
-        pageProps: GetServerSidePageProps
+        pageProps: ServerSidePageProps
+    ): MaybeUndefined<OnErrorResponse> | Promise<MaybeUndefined<OnErrorResponse>>;
+}
+
+export interface ApolloStaticFetchOptions<Query, Variables = any>
+    extends ApolloFetchOptionsBase<Variables> {
+    /**
+     * Do something with `data` or change `pageProps` based on what data was returned.
+     * @param data Data returned after a successful fetch.
+     * @param pageProps Static page props, which can be changed within this method.
+     */
+    onCompleted?(data: Query, pageProps: StaticPageProps): VoidOrPromise;
+    /**
+     * Handle errors resulting from fetching.
+     * @param pageProps Server-side page props, which can be changed within this method.
+     */
+    onError?(
+        pageProps: StaticPageProps
     ): MaybeUndefined<OnErrorResponse> | Promise<MaybeUndefined<OnErrorResponse>>;
 }
 
@@ -106,17 +146,27 @@ export function createService(options: ServiceOptions) {
         );
     }
 
+    function apolloFetch<Query = any, Variables = any>(
+        options: ApolloServerSideFetchOptions<Query, Variables>
+    ): GetServerSidePropsMiddleware;
+    function apolloFetch<Query = any, Variables = any>(
+        options: ApolloStaticFetchOptions<Query, Variables>,
+        isStatic: true
+    ): GetStaticPropsMiddleware;
+
     /**
      * A fetcher that runs server-side to perform query fetches for Apollo. It can be used to generate server-side or static pages.
      * @param options `query` and `variables` options to be passed into `ApolloClient#query`.
-     * @param type - Either `serverSide` or `static` depending on how you want NextJS to render your page. Defaults to `serverSide`.
+     * @param isStatic - Whether to use `apolloFetch` for `getStaticProps`.
      * @returns A middleware function that can be passed into `gssp` or `gsp`.
      */
     function apolloFetch<Query = any, Variables = any>(
-        options: SSRFetchOptions<Query, Variables>,
-        type: MiddlewareType = "serverSide"
+        options:
+            | ApolloServerSideFetchOptions<Query, Variables>
+            | ApolloStaticFetchOptions<Query, Variables>,
+        isStatic = false
     ) {
-        const middleware = createMiddleware[type];
+        const middleware = createMiddleware[isStatic ? "static" : "serverSide"];
 
         return middleware(async ({ context, pageProps, next }) => {
             const { query, variables, onCompleted, onError } = options;
@@ -128,22 +178,22 @@ export function createService(options: ServiceOptions) {
                 variables: variables instanceof Function ? variables(context.params) : variables,
             });
 
+            pageProps.props.initialApolloState = client.cache.extract();
+
             if (error || errors) {
                 if (__DEV__) {
                     console.error("ApolloError", error);
                     console.error("GraphQLErrors", errors);
                 }
 
-                const errorResponse = await onError?.(pageProps);
+                const errorResponse = await onError?.(pageProps as any);
 
                 if (errorResponse?.discontinue) return;
             }
 
             if (data) {
-                await onCompleted?.(data, pageProps);
+                await onCompleted?.(data, pageProps as any);
             }
-
-            pageProps.props.initialApolloState = client.cache.extract();
 
             return next();
         });

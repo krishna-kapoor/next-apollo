@@ -1,5 +1,10 @@
 import { GetServerSidePropsContext, GetStaticPropsContext } from "next";
-import { GetServerSidePageProps, GetStaticPageProps, VoidOrPromise } from "../createService";
+import {
+    MaybeUndefined,
+    ServerSidePageProps,
+    StaticPageProps,
+    VoidOrPromise,
+} from "../createService";
 
 export type NextFunction = () => void;
 
@@ -9,14 +14,16 @@ export interface MiddlewareParams<C, P> {
     next: NextFunction;
 }
 
-export type Middleware<C, P> = (params: MiddlewareParams<C, P>) => VoidOrPromise | undefined;
+export type Middleware<C, P> = (
+    params: MiddlewareParams<C, P>
+) => MaybeUndefined<VoidOrPromise | undefined>;
 
 export type GetServerSidePropsMiddleware = Middleware<
     GetServerSidePropsContext,
-    GetServerSidePageProps
+    ServerSidePageProps
 >;
 
-export type GetStaticPropsMiddleware = Middleware<GetStaticPropsContext, GetStaticPageProps>;
+export type GetStaticPropsMiddleware = Middleware<GetStaticPropsContext, StaticPageProps>;
 
 /**
  * Create a middleware function for `getServerSideProps`.
