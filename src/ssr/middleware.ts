@@ -1,4 +1,4 @@
-import { GetServerSidePropsContext, GetStaticPropsContext } from "next";
+import { GetServerSidePropsContext, GetStaticProps, GetStaticPropsContext } from "next";
 import {
     MaybeUndefined,
     ServerSidePageProps,
@@ -6,8 +6,13 @@ import {
     VoidOrPromise,
 } from "../createService";
 
+// type x = GetStaticProps;
+
 export type NextFunction = () => void;
 
+/**
+ * @deprecated Since version 1.0.5-beta.6
+ */
 export interface MiddlewareParams<C, P> {
     context: C;
     pageProps: P;
@@ -15,7 +20,9 @@ export interface MiddlewareParams<C, P> {
 }
 
 export type Middleware<C, P> = (
-    params: MiddlewareParams<C, P>
+    context: C,
+    pageProps: P,
+    next: NextFunction
 ) => MaybeUndefined<VoidOrPromise | undefined>;
 
 export type GetServerSidePropsMiddleware = Middleware<

@@ -23,12 +23,8 @@ export function gssp(
 
             prevIndex = index;
 
-            if (currentMiddleware instanceof Function) {
-                await currentMiddleware({
-                    context,
-                    pageProps,
-                    next: () => runner(index + 1),
-                });
+            if (typeof currentMiddleware === "function") {
+                await currentMiddleware(context, pageProps, () => runner(index + 1));
             }
         };
 

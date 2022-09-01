@@ -2,7 +2,6 @@ import {
     ApolloClient,
     ApolloClientOptions,
     DocumentNode,
-    InMemoryCache,
     NormalizedCacheObject,
 } from "@apollo/client";
 import deepmerge from "deepmerge";
@@ -39,7 +38,7 @@ export type MaybeUndefined<T> = T | undefined;
 
 type CacheShape = NormalizedCacheObject;
 
-export type ServiceOptions = Omit<ApolloClientOptions<CacheShape>, "ssrMode" | "cache">;
+export type ServiceOptions = Omit<ApolloClientOptions<CacheShape>, "ssrMode">;
 
 export type ValueOrCallback<V, P> = V | ((param: P) => V);
 
@@ -55,7 +54,12 @@ export interface ApolloFetchOptionsBase<Variables = any> {
     /**
      * GraphQL query variables, if required.
      */
-    variables?: ValueOrCallback<Variables, MaybeUndefined<ParsedUrlQuery>>;
+    variables?: ValueOrCallback<Variables, ParamsAndQuery>;
+}
+
+export interface ParamsAndQuery {
+    params?: MaybeUndefined<ParsedUrlQuery>;
+    query?: MaybeUndefined<ParsedUrlQuery>;
 }
 
 export interface ApolloServerSideFetchOptions<Query, Variables = any>
@@ -85,7 +89,7 @@ export interface ApolloStaticFetchOptions<Query, Variables = any>
     onCompleted?(data: Query, pageProps: StaticPageProps): VoidOrPromise;
     /**
      * Handle errors resulting from fetching.
-     * @param pageProps Server-side page props, which can be changed within this method.
+     * @param pageProps Static page props, which can be changed within this method.
      */
     onError?(
         pageProps: StaticPageProps
@@ -106,7 +110,6 @@ export function createService(options: ServiceOptions) {
     function createApolloClient() {
         return new ApolloClient({
             ssrMode: typeof window === "undefined",
-            cache: new InMemoryCache(),
             ...options,
         });
     }
@@ -168,14 +171,20 @@ export function createService(options: ServiceOptions) {
     ) {
         const middleware = createMiddleware[isStatic ? "static" : "serverSide"];
 
-        return middleware(async ({ context, pageProps, next }) => {
+        return middleware(async (context, pageProps, next) => {
             const { query, variables, onCompleted, onError } = options;
 
             const client = initializeApolloClient();
 
             const { data, error, errors } = await client.query<Query, Variables>({
                 query,
-                variables: variables instanceof Function ? variables(context.params) : variables,
+                variables:
+                    variables instanceof Function
+                        ? variables({
+                              params: context.params,
+                              query: "query" in context ? context.query : undefined,
+                          })
+                        : variables,
             });
 
             pageProps.props.initialApolloState = client.cache.extract();

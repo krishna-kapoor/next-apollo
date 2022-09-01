@@ -1,11 +1,6 @@
-# @krishna-kapoor/next-apollo v1.0.5
+# @krishna-kapoor/next-apollo v1.0.6
 
 Seamlessly integrate Apollo SSR into NextJS.
-
-## What's new and What's changed in v1.0.5
-
--   **NEW:** Added support for `getStaticProps`
--   **CHANGED:** Removed the `NextApolloClient` class and replaced it with `createService` that returns utility functions to share the same purpose
 
 ## Usage
 
@@ -14,14 +9,16 @@ Seamlessly integrate Apollo SSR into NextJS.
 ```ts
 // lib/apollo.ts
 
+import { InMemoryCache } from "@apollo/client";
 import { createService } from "@krishna-kapoor/next-apollo";
 import { HttpLink } from "@apollo/client";
 
-export const { useNextApollo, apolloFetch } = createService({
+export const { useNextApollo, apolloFetch, initializeApollo } = createService({
     link: new HttpLink({
         uri: "<YOUR-URI>",
         credentials: "include",
     }),
+    cache: new InMemoryCache(),
 });
 ```
 
@@ -69,7 +66,7 @@ export default function App({ Component, pageProps }: AppProps) {
 ```tsx
 // pages/index.tsx
 
-import { MY_QUERY } from "path/to/queries/../..";
+import { MY_QUERY } from "path/to/queries";
 import { gssp } from "@krishna-kapoor/next-apollo/ssr";
 import { apolloFetch } from "lib/apollo";
 
@@ -88,7 +85,10 @@ If you have a query with variables that you want to obtain from the `context.que
 export const getServerSideProps = gssp(
     apolloFetch({
         query: MY_QUERY,
-        variables: query => ({ var1: query.var1 }),
+        variables: ({ params, query }) => ({
+            var1: params.var1,
+            // ...
+        }),
     })
 );
 ```
