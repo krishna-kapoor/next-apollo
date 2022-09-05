@@ -40,13 +40,15 @@ type CacheShape = NormalizedCacheObject;
 
 export type ServiceOptions = Omit<ApolloClientOptions<CacheShape>, "ssrMode">;
 
+export type MaybePromise<T> = T | Promise<T>;
+
 export type ValueOrCallback<V, P> = V | ((param: P) => V);
 
 export interface OnErrorResponse {
     discontinue?: true;
 }
 
-export interface ApolloFetchOptionsBase<Variables = any> {
+export interface ApolloFetchOptionsBase<Query, Variables = any> {
     /**
      * The GraphQL query to run.
      */
@@ -55,6 +57,10 @@ export interface ApolloFetchOptionsBase<Variables = any> {
      * GraphQL query variables, if required.
      */
     variables?: ValueOrCallback<Variables, ParamsAndQuery>;
+    /**
+     * The key of the data that will be returned from the query. This may be used to call `onNotFound` this `data[dataKey]` is undefined.
+     */
+    dataKay: Exclude<keyof Query, "__typename">;
 }
 
 export interface ParamsAndQuery {
@@ -63,7 +69,7 @@ export interface ParamsAndQuery {
 }
 
 export interface ApolloServerSideFetchOptions<Query, Variables = any>
-    extends ApolloFetchOptionsBase<Variables> {
+    extends ApolloFetchOptionsBase<Query, Variables> {
     /**
      * Do something with `data` or change `pageProps` based on what data was returned.
      * @param data Data returned after a successful fetch.
@@ -77,10 +83,15 @@ export interface ApolloServerSideFetchOptions<Query, Variables = any>
     onError?(
         pageProps: ServerSidePageProps
     ): MaybeUndefined<OnErrorResponse> | Promise<MaybeUndefined<OnErrorResponse>>;
+    /**
+     * Called when `onError` does not fire and your query returns a `null` or `undefined` value.
+     * @param pageProps Server-side page props, which can be changed within this method.
+     */
+    onNotFound?(pageProps: ServerSidePageProps): VoidOrPromise;
 }
 
 export interface ApolloStaticFetchOptions<Query, Variables = any>
-    extends ApolloFetchOptionsBase<Variables> {
+    extends ApolloFetchOptionsBase<Query, Variables> {
     /**
      * Do something with `data` or change `pageProps` based on what data was returned.
      * @param data Data returned after a successful fetch.
@@ -94,13 +105,19 @@ export interface ApolloStaticFetchOptions<Query, Variables = any>
     onError?(
         pageProps: StaticPageProps
     ): MaybeUndefined<OnErrorResponse> | Promise<MaybeUndefined<OnErrorResponse>>;
+    /**
+     * Called when `onError` does not fire and your query returns a `null` or `undefined` value.
+     * @param pageProps Static page props, which can be changed within this method.
+     */
+    onNotFound?(pageProps: StaticPageProps): VoidOrPromise;
 }
 
 let apolloClient: ApolloClient<CacheShape>;
 
 /**
- * A function that returns all utility to be able to use `ApolloClient` in your NextJS project. **v1.0.5** uses `InMemoryCache` by default, so that you do not need to pass it explicitly in `options`.
+ * A function that returns all utility to be able to use `ApolloClient` in your NextJS project.
  * @param options (ServiceOptions) - All options to be passed into `ApolloClient` except for `cache` and `ssrMode`
+ * @version 1.0.7-beta
  */
 export function createService(options: ServiceOptions) {
     /**
@@ -172,7 +189,7 @@ export function createService(options: ServiceOptions) {
         const middleware = createMiddleware[isStatic ? "static" : "serverSide"];
 
         return middleware(async (context, pageProps, next) => {
-            const { query, variables, onCompleted, onError } = options;
+            const { query, variables, onCompleted, onError, onNotFound, dataKay } = options;
 
             const client = initializeApolloClient();
 
@@ -202,6 +219,12 @@ export function createService(options: ServiceOptions) {
 
             if (data) {
                 await onCompleted?.(data, pageProps as any);
+
+                const realData = data[dataKay];
+
+                if (!realData) {
+                    await onNotFound?.(pageProps as any);
+                }
             }
 
             return next();
