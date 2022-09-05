@@ -48,7 +48,7 @@ export interface OnErrorResponse {
     discontinue?: true;
 }
 
-export interface ApolloFetchOptionsBase<Query, Variables = any> {
+export interface ApolloFetchOptionsBase<Query = any, Variables = any> {
     /**
      * The GraphQL query to run.
      */
@@ -60,7 +60,7 @@ export interface ApolloFetchOptionsBase<Query, Variables = any> {
     /**
      * The key of the data that will be returned from the query. This may be used to call `onNotFound` this `data[dataKey]` is undefined.
      */
-    dataKay: Exclude<keyof Query, "__typename">;
+    dataKey: Exclude<keyof Query, "__typename">;
 }
 
 export interface ParamsAndQuery {
@@ -189,7 +189,7 @@ export function createService(options: ServiceOptions) {
         const middleware = createMiddleware[isStatic ? "static" : "serverSide"];
 
         return middleware(async (context, pageProps, next) => {
-            const { query, variables, onCompleted, onError, onNotFound, dataKay } = options;
+            const { query, variables, onCompleted, onError, onNotFound, dataKey } = options;
 
             const client = initializeApolloClient();
 
@@ -220,7 +220,7 @@ export function createService(options: ServiceOptions) {
             if (data) {
                 await onCompleted?.(data, pageProps as any);
 
-                const realData = data[dataKay];
+                const realData = data[dataKey];
 
                 if (!realData) {
                     await onNotFound?.(pageProps as any);
