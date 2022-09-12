@@ -9,6 +9,7 @@ import { Redirect } from "next";
 import { ParsedUrlQuery } from "querystring";
 import { useMemo } from "react";
 import { __DEV__ } from "./constants";
+import { dehydrate } from "./ssr/dehydrate";
 import {
     createMiddleware,
     GetServerSidePropsMiddleware,
@@ -82,7 +83,9 @@ export interface ApolloServerSideFetchOptions<Query, Variables = any>
      */
     onError?(
         pageProps: ServerSidePageProps
-    ): MaybeUndefined<OnErrorResponse> | Promise<MaybeUndefined<OnErrorResponse>>;
+    ):
+        | MaybeUndefined<OnErrorResponse>
+        | Promise<MaybeUndefined<OnErrorResponse>>;
     /**
      * Called when `onError` does not fire and your query returns a `null` or `undefined` value.
      * @param pageProps Server-side page props, which can be changed within this method.
@@ -104,7 +107,9 @@ export interface ApolloStaticFetchOptions<Query, Variables = any>
      */
     onError?(
         pageProps: StaticPageProps
-    ): MaybeUndefined<OnErrorResponse> | Promise<MaybeUndefined<OnErrorResponse>>;
+    ):
+        | MaybeUndefined<OnErrorResponse>
+        | Promise<MaybeUndefined<OnErrorResponse>>;
     /**
      * Called when `onError` does not fire and your query returns a `null` or `undefined` value.
      * @param pageProps Static page props, which can be changed within this method.
@@ -189,22 +194,35 @@ export function createService(options: ServiceOptions) {
         const middleware = createMiddleware[isStatic ? "static" : "serverSide"];
 
         return middleware(async (context, pageProps, next) => {
-            const { query, variables, onCompleted, onError, onNotFound, dataKey } = options;
+            const {
+                query,
+                variables,
+                onCompleted,
+                onError,
+                onNotFound,
+                dataKey,
+            } = options;
 
             const client = initializeApolloClient();
 
-            const { data, error, errors } = await client.query<Query, Variables>({
+            const { data, error, errors } = await client.query<
+                Query,
+                Variables
+            >({
                 query,
                 variables:
                     variables instanceof Function
                         ? variables({
                               params: context.params,
-                              query: "query" in context ? context.query : undefined,
+                              query:
+                                  "query" in context
+                                      ? context.query
+                                      : undefined,
                           })
                         : variables,
             });
 
-            pageProps.props.initialApolloState = client.cache.extract();
+            pageProps.props.initialApolloState = dehydrate(client);
 
             if (error || errors) {
                 if (__DEV__) {

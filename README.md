@@ -1,6 +1,31 @@
-# @krishna-kapoor/next-apollo v1.0.6
+# @krishna-kapoor/next-apollo v1.0.8
 
 Seamlessly integrate Apollo SSR into NextJS.
+
+## What's new in v1.0.8
+
+-   Added the `dehydrate` function to reduce a few lines of code while rendering content server-side. Use the following example for reference:
+
+```jsx
+import { apolloFetch } from "lib/apollo";
+import { dehydrate } from "@krishna-kapoor/next-apollo/ssr";
+
+export const getServerSideProps = gssp(async (context, pageProps, next) => {
+    const client = initializeApolloClient();
+
+    await client.query({
+        // ...
+    });
+
+    dehydrate(client, pageProps);
+
+    return next();
+});
+
+export default function MyApp() {
+    // ...
+}
+```
 
 ## Usage
 
