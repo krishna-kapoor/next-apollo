@@ -36,4 +36,6 @@ export function dehydrate(
     if (pageProps) {
         pageProps.props.initialApolloState = extractedCache;
     }
+
+    return extractedCache;
 }

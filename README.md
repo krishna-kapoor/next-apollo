@@ -1,8 +1,8 @@
-# @krishna-kapoor/next-apollo v1.0.8
+# @krishna-kapoor/next-apollo v1.0.9
 
 Seamlessly integrate Apollo SSR into NextJS.
 
-## What's new in v1.0.8
+## Since v1.0.8
 
 -   Added the `dehydrate` function to reduce a few lines of code while rendering content server-side. Use the following example for reference:
 
