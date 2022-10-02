@@ -1,11 +1,11 @@
-import { GetServerSideProps, GetStaticProps } from "next";
-import { gsp } from "./gsp";
-import { gssp } from "./gssp";
-import { GetServerSidePropsMiddleware, GetStaticPropsMiddleware } from "./middleware";
-
-export type Wrapper<T, R> = (...middleware: T[]) => R;
-
-export type GSPWrapper = Wrapper<GetStaticPropsMiddleware, GetStaticProps>;
+import {
+    GetServerSidePropsMiddleware,
+    GetStaticPropsMiddleware,
+    GSPWrapper,
+    GSSPWrapper,
+} from '../types';
+import { gsp } from './gsp';
+import { gssp } from './gssp';
 
 /**
  * This creates a function that wraps other middleware for `getStaticProps`.
@@ -14,8 +14,6 @@ export type GSPWrapper = Wrapper<GetStaticPropsMiddleware, GetStaticProps>;
 function createGSPWrapper(wrapper: GetStaticPropsMiddleware): GSPWrapper {
     return (...middleware) => gsp(wrapper, ...middleware);
 }
-
-export type GSSPWrapper = Wrapper<GetServerSidePropsMiddleware, GetServerSideProps>;
 
 /**
  * This creates a function that wraps other middleware for `getServerSideProps`.

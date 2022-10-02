@@ -1,137 +1,40 @@
+import { ApolloClient } from '@apollo/client';
+import deepmerge from 'deepmerge';
+import { useMemo } from 'react';
+import { __DEV__ } from './constants';
+import { dehydrate } from './ssr/dehydrate';
+import { createMiddleware } from './ssr/middleware';
 import {
-    ApolloClient,
-    ApolloClientOptions,
-    DocumentNode,
-    NormalizedCacheObject,
-} from "@apollo/client";
-import deepmerge from "deepmerge";
-import { Redirect } from "next";
-import { ParsedUrlQuery } from "querystring";
-import { useMemo } from "react";
-import { __DEV__ } from "./constants";
-import { dehydrate } from "./ssr/dehydrate";
-import {
-    createMiddleware,
+    ApolloServerSideFetchOptions,
+    ApolloStaticFetchOptions,
+    CacheShape,
     GetServerSidePropsMiddleware,
     GetStaticPropsMiddleware,
-} from "./ssr/middleware";
-
-export interface ServerSidePageProps {
-    props: {
-        initialApolloState: NormalizedCacheObject;
-        [key: string]: any;
-    };
-    redirect: Redirect;
-    notFound: true;
-}
-
-export interface StaticPageProps extends ServerSidePageProps {
-    revalidate: number | false;
-}
-
-export type VoidOrPromise = void | Promise<void>;
-
-export type MiddlewareType = keyof typeof createMiddleware;
-
-type Maybe<T> = MaybeUndefined<T> | null;
-
-export type MaybeUndefined<T> = T | undefined;
-
-type CacheShape = NormalizedCacheObject;
-
-export type ServiceOptions = Omit<ApolloClientOptions<CacheShape>, "ssrMode">;
-
-export type MaybePromise<T> = T | Promise<T>;
-
-export type ValueOrCallback<V, P> = V | ((param: P) => V);
-
-export interface OnErrorResponse {
-    discontinue?: true;
-}
-
-export interface ApolloFetchOptionsBase<Query = any, Variables = any> {
-    /**
-     * The GraphQL query to run.
-     */
-    query: DocumentNode;
-    /**
-     * GraphQL query variables, if required.
-     */
-    variables?: ValueOrCallback<Variables, ParamsAndQuery>;
-    /**
-     * The key of the data that will be returned from the query. This may be used to call `onNotFound` this `data[dataKey]` is undefined.
-     */
-    dataKey: Exclude<keyof Query, "__typename">;
-}
-
-export interface ParamsAndQuery {
-    params?: MaybeUndefined<ParsedUrlQuery>;
-    query?: MaybeUndefined<ParsedUrlQuery>;
-}
-
-export interface ApolloServerSideFetchOptions<Query, Variables = any>
-    extends ApolloFetchOptionsBase<Query, Variables> {
-    /**
-     * Do something with `data` or change `pageProps` based on what data was returned.
-     * @param data Data returned after a successful fetch.
-     * @param pageProps Server-side page props, which can be changed within this method.
-     */
-    onCompleted?(data: Query, pageProps: ServerSidePageProps): VoidOrPromise;
-    /**
-     * Handle errors resulting from fetching.
-     * @param pageProps Server-side page props, which can be changed within this method.
-     */
-    onError?(
-        pageProps: ServerSidePageProps
-    ):
-        | MaybeUndefined<OnErrorResponse>
-        | Promise<MaybeUndefined<OnErrorResponse>>;
-    /**
-     * Called when `onError` does not fire and your query returns a `null` or `undefined` value.
-     * @param pageProps Server-side page props, which can be changed within this method.
-     */
-    onNotFound?(pageProps: ServerSidePageProps): VoidOrPromise;
-}
-
-export interface ApolloStaticFetchOptions<Query, Variables = any>
-    extends ApolloFetchOptionsBase<Query, Variables> {
-    /**
-     * Do something with `data` or change `pageProps` based on what data was returned.
-     * @param data Data returned after a successful fetch.
-     * @param pageProps Static page props, which can be changed within this method.
-     */
-    onCompleted?(data: Query, pageProps: StaticPageProps): VoidOrPromise;
-    /**
-     * Handle errors resulting from fetching.
-     * @param pageProps Static page props, which can be changed within this method.
-     */
-    onError?(
-        pageProps: StaticPageProps
-    ):
-        | MaybeUndefined<OnErrorResponse>
-        | Promise<MaybeUndefined<OnErrorResponse>>;
-    /**
-     * Called when `onError` does not fire and your query returns a `null` or `undefined` value.
-     * @param pageProps Static page props, which can be changed within this method.
-     */
-    onNotFound?(pageProps: StaticPageProps): VoidOrPromise;
-}
+    Maybe,
+    ServiceOptions,
+    WithInitialApolloState,
+} from './types';
 
 let apolloClient: ApolloClient<CacheShape>;
 
 /**
  * A function that returns all utility to be able to use `ApolloClient` in your NextJS project.
  * @param options (ServiceOptions) - All options to be passed into `ApolloClient` except for `cache` and `ssrMode`
- * @version 1.0.7-beta
+ * @version 1.1.0
  */
-export function createService(options: ServiceOptions) {
+export function createService(
+    options: ServiceOptions,
+    mergeOptions: { deep?: boolean } = {}
+) {
+    const { deep = true } = mergeOptions;
+
     /**
      * A function that returns a new instance of `ApolloClient`. You may not have to ever use this in your project.
      * @returns `ApolloClient`
      */
     function createApolloClient() {
         return new ApolloClient({
-            ssrMode: typeof window === "undefined",
+            ssrMode: typeof window === 'undefined',
             ...options,
         });
     }
@@ -146,11 +49,20 @@ export function createService(options: ServiceOptions) {
 
         if (initialState) {
             const previousCacheState = _apolloClient.extract();
-            const mergedState = deepmerge(previousCacheState, initialState);
-            _apolloClient.cache.restore(mergedState);
+
+            if (deep) {
+                const mergedState = deepmerge(previousCacheState, initialState);
+                _apolloClient.cache.restore(mergedState);
+            } else {
+                const shallowMergedState = {
+                    ...previousCacheState,
+                    ...initialState,
+                };
+                _apolloClient.cache.restore(shallowMergedState);
+            }
         }
 
-        if (typeof window === "undefined") {
+        if (typeof window === 'undefined') {
             return _apolloClient;
         }
 
@@ -164,7 +76,7 @@ export function createService(options: ServiceOptions) {
      * @param pageProps The `pageProps` that the custom app provides every component.
      * @returns `ApolloClient`
      */
-    function useNextApollo(pageProps: any) {
+    function useNextApollo<P>(pageProps: WithInitialApolloState<P>) {
         return useMemo(
             () => initializeApolloClient(pageProps.initialApolloState),
             [pageProps.initialApolloState]
@@ -191,7 +103,7 @@ export function createService(options: ServiceOptions) {
             | ApolloStaticFetchOptions<Query, Variables>,
         isStatic = false
     ) {
-        const middleware = createMiddleware[isStatic ? "static" : "serverSide"];
+        const middleware = createMiddleware[isStatic ? 'static' : 'serverSide'];
 
         return middleware(async (context, pageProps, next) => {
             const {
@@ -215,7 +127,7 @@ export function createService(options: ServiceOptions) {
                         ? variables({
                               params: context.params,
                               query:
-                                  "query" in context
+                                  'query' in context
                                       ? context.query
                                       : undefined,
                           })
@@ -226,8 +138,8 @@ export function createService(options: ServiceOptions) {
 
             if (error || errors) {
                 if (__DEV__) {
-                    console.error("ApolloError", error);
-                    console.error("GraphQLErrors", errors);
+                    console.error('ApolloError', error);
+                    console.error('GraphQLErrors', errors);
                 }
 
                 const errorResponse = await onError?.(pageProps as any);

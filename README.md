@@ -1,14 +1,19 @@
-# @krishna-kapoor/next-apollo v1.0.9
+# @krishna-kapoor/next-apollo v1.1.0
 
 Seamlessly integrate Apollo SSR into NextJS.
+
+## What's new
+
+-   Updated NextJS and Apollo Client to latest versions.
+-   Added additional utility types for quicker development.
 
 ## Since v1.0.8
 
 -   Added the `dehydrate` function to reduce a few lines of code while rendering content server-side. Use the following example for reference:
 
 ```jsx
-import { apolloFetch } from "lib/apollo";
-import { dehydrate } from "@krishna-kapoor/next-apollo/ssr";
+import { apolloFetch } from 'lib/apollo';
+import { dehydrate } from '@krishna-kapoor/next-apollo/ssr';
 
 export const getServerSideProps = gssp(async (context, pageProps, next) => {
     const client = initializeApolloClient();
@@ -34,14 +39,14 @@ export default function MyApp() {
 ```ts
 // lib/apollo.ts
 
-import { InMemoryCache } from "@apollo/client";
-import { createService } from "@krishna-kapoor/next-apollo";
-import { HttpLink } from "@apollo/client";
+import { InMemoryCache } from '@apollo/client';
+import { createService } from '@krishna-kapoor/next-apollo';
+import { HttpLink } from '@apollo/client';
 
 export const { useNextApollo, apolloFetch, initializeApollo } = createService({
     link: new HttpLink({
-        uri: "<YOUR-URI>",
-        credentials: "include",
+        uri: '<YOUR-URI>',
+        credentials: 'include',
     }),
     cache: new InMemoryCache(),
 });
@@ -52,8 +57,8 @@ export const { useNextApollo, apolloFetch, initializeApollo } = createService({
 ```js
 // pages/_app.js
 
-import { useNextApollo } from "lib/apollo";
-import { ApolloProvider } from "@apollo/client";
+import { useNextApollo } from 'lib/apollo';
+import { ApolloProvider } from '@apollo/client';
 
 export default function App({ Component, pageProps }) {
     const client = useNextApollo(pageProps);
@@ -71,9 +76,9 @@ or using _TypeScript_, like this:
 ```tsx
 // pages/_app.tsx
 
-import { AppProps } from "next";
-import { useNextApollo } from "lib/apollo";
-import { ApolloProvider } from "@apollo/client";
+import { AppProps } from 'next';
+import { useNextApollo } from 'lib/apollo';
+import { ApolloProvider } from '@apollo/client';
 
 export default function App({ Component, pageProps }: AppProps) {
     const client = useNextApollo(pageProps);
@@ -91,9 +96,9 @@ export default function App({ Component, pageProps }: AppProps) {
 ```tsx
 // pages/index.tsx
 
-import { MY_QUERY } from "path/to/queries";
-import { gssp } from "@krishna-kapoor/next-apollo/ssr";
-import { apolloFetch } from "lib/apollo";
+import { MY_QUERY } from 'path/to/queries';
+import { gssp } from '@krishna-kapoor/next-apollo/ssr';
+import { apolloFetch } from 'lib/apollo';
 
 export default function Page() {
     const { data } = useQuery(MY_QUERY);
@@ -125,17 +130,17 @@ Usage of the `createGSSPMiddleware` function allows you to create a middleware, 
 ```tsx
 // custom-middleware.ts
 
-import { middleware } from "@krishna-kapoor/next-apollo/ssr";
+import { middleware } from '@krishna-kapoor/next-apollo/ssr';
 
 export const auth = middleware.serverSide(({ context, pageProps, next }) => {
-    const accessToken = context.req.cookies["<cookie key>"];
+    const accessToken = context.req.cookies['<cookie key>'];
 
     if (accessToken) {
         return next();
     }
 
     pageProps.redirect = {
-        destination: "/login",
+        destination: '/login',
         permanent: false,
     };
 });

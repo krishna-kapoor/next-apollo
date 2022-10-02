@@ -1,6 +1,5 @@
-import { GetServerSideProps } from "next";
-import { ServerSidePageProps } from "../createService";
-import { GetServerSidePropsMiddleware } from "./middleware";
+import { GetServerSideProps } from 'next';
+import { GetServerSidePropsMiddleware, ServerSidePageProps } from '../types';
 
 export type NonEmptyArray<T> = [T, ...T[]];
 
@@ -10,7 +9,7 @@ export type NonEmptyArray<T> = [T, ...T[]];
 export function gssp(
     ...middleware: NonEmptyArray<GetServerSidePropsMiddleware>
 ): GetServerSideProps {
-    return async context => {
+    return async (context) => {
         let pageProps = { props: {} } as ServerSidePageProps;
         let prevIndex = -1;
 
@@ -18,13 +17,15 @@ export function gssp(
             const currentMiddleware = middleware[index];
 
             if (index === prevIndex) {
-                throw new Error("[gssp] next() was called multiple times.");
+                throw new Error('[gssp] next() was called multiple times.');
             }
 
             prevIndex = index;
 
-            if (typeof currentMiddleware === "function") {
-                await currentMiddleware(context, pageProps, () => runner(index + 1));
+            if (typeof currentMiddleware === 'function') {
+                await currentMiddleware(context, pageProps, () =>
+                    runner(index + 1)
+                );
             }
         };
 
