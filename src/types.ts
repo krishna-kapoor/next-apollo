@@ -1,5 +1,8 @@
-import { ApolloClientOptions, NormalizedCacheObject } from '@apollo/client';
-import { DocumentNode } from 'graphql';
+import {
+    ApolloClientOptions,
+    DocumentNode,
+    NormalizedCacheObject,
+} from '@apollo/client';
 import {
     GetServerSideProps,
     GetServerSidePropsContext,
@@ -9,7 +12,6 @@ import {
 } from 'next';
 import { AppProps } from 'next/app';
 import { ParsedUrlQuery } from 'querystring';
-import { createMiddleware } from './ssr';
 
 export interface ServerSidePageProps {
     props: {
@@ -26,7 +28,7 @@ export interface StaticPageProps extends ServerSidePageProps {
 
 export type VoidOrPromise = void | Promise<void>;
 
-export type MiddlewareType = keyof typeof createMiddleware;
+export type MiddlewareType = 'static' | 'serverSide';
 
 export type Maybe<T> = MaybeUndefined<T> | null;
 

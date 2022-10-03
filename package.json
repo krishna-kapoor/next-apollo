@@ -1,7 +1,7 @@
 {
     "name": "@krishna-kapoor/next-apollo",
     "main": "index.js",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "Seamlessly integrate Apollo SSR into NextJS.",
     "author": "Krishna Kapoor",
     "license": "MIT",
@@ -18,6 +18,7 @@
     "devDependencies": {
         "@types/node": "^18.7.23",
         "@types/react": "^18.0.21",
+        "@types/react-dom": "^18.0.6",
         "typescript": "^4.8.4"
     },
     "repository": {
