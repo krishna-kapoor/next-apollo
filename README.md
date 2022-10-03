@@ -1,8 +1,12 @@
-# @krishna-kapoor/next-apollo v1.1.0
+# @krishna-kapoor/next-apollo v1.1.2
 
 Seamlessly integrate Apollo SSR into NextJS.
 
 ## What's new
+
+-   Improved merging algorithm for SSR
+
+## What's new (v.1.1.0)
 
 -   Updated NextJS and Apollo Client to latest versions.
 -   Added additional utility types for quicker development.

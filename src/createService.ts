@@ -1,5 +1,6 @@
 import { ApolloClient } from '@apollo/client';
 import deepmerge from 'deepmerge';
+import isEqual from 'lodash/isEqual';
 import { useMemo } from 'react';
 import { __DEV__ } from './constants';
 import { dehydrate } from './ssr/dehydrate';
@@ -22,12 +23,7 @@ let apolloClient: ApolloClient<CacheShape>;
  * @param options (ServiceOptions) - All options to be passed into `ApolloClient` except for `cache` and `ssrMode`
  * @version 1.1.0
  */
-export function createService(
-    options: ServiceOptions,
-    mergeOptions: { deep?: boolean } = {}
-) {
-    const { deep = true } = mergeOptions;
-
+export function createService(options: ServiceOptions) {
     /**
      * A function that returns a new instance of `ApolloClient`. You may not have to ever use this in your project.
      * @returns `ApolloClient`
@@ -48,18 +44,20 @@ export function createService(
         const _apolloClient = apolloClient ?? createApolloClient();
 
         if (initialState) {
-            const previousCacheState = _apolloClient.extract();
+            const existingCache = _apolloClient.extract();
 
-            if (deep) {
-                const mergedState = deepmerge(previousCacheState, initialState);
-                _apolloClient.cache.restore(mergedState);
-            } else {
-                const shallowMergedState = {
-                    ...previousCacheState,
-                    ...initialState,
-                };
-                _apolloClient.cache.restore(shallowMergedState);
-            }
+            const merged = deepmerge(initialState, existingCache, {
+                arrayMerge(target, source) {
+                    return [
+                        ...source,
+                        ...target.filter((d) =>
+                            source.every((s) => !isEqual(s, d))
+                        ),
+                    ];
+                },
+            });
+
+            _apolloClient.cache.restore(merged);
         }
 
         if (typeof window === 'undefined') {
